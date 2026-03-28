@@ -123,18 +123,21 @@ def evaluate_agent(agent, agent_type="bandit", n_episodes=300, n_tasks=MAX_TASKS
                 # Bandit: use exploitation mode (no exploration)
                 action = agent.select_action(state, available)
             elif agent_type == "dqn":
-                # DQN: use greedy policy
+                # DQN: use greedy policy with action masking
                 import torch
-                with torch.no_grad():
-                    q_vals = agent(torch.FloatTensor(state)).numpy()
-                # Mask invalid actions
-                mask = np.full(n_tasks, -np.inf)
-                mask[available] = q_vals[available]
-                action = int(np.argmax(mask))
+                # Support both DQNAgent (has select_action_greedy) and raw QNetwork
+                if hasattr(agent, "select_action_greedy"):
+                    action = agent.select_action_greedy(state, available)
+                else:
+                    with torch.no_grad():
+                        q_vals = agent(torch.FloatTensor(state)).numpy()
+                    mask = np.full(n_tasks, -np.inf)
+                    mask[available] = q_vals[available]
+                    action = int(np.argmax(mask))
             else:
                 raise ValueError(f"Unknown agent type: {agent_type}")
             
-            _, reward, done, info = env.step(action)
+            next_state, reward, done, info = env.step(action)
             ep_reward += reward
             
             task = info["task"]
@@ -143,6 +146,10 @@ def evaluate_agent(agent, agent_type="bandit", n_episodes=300, n_tasks=MAX_TASKS
             if finish_time > task["deadline"]:
                 ep_late_tasks += 1
                 ep_total_lateness += finish_time - task["deadline"]
+            
+            # Update state for next step
+            if next_state is not None:
+                state = next_state
         
         rewards.append(ep_reward)
         violations.append(ep_late_tasks / n_tasks)

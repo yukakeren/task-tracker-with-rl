@@ -6,19 +6,22 @@
 
 ## 📊 Project Status
 
-| Component | Status | Details |
-|-----------|--------|---------|
+| Component                | Status      | Details                                                          |
+| ------------------------ | ----------- | ---------------------------------------------------------------- |
 | **Phase 1: Environment** | ✅ Complete | Task generator, state encoding, reward function, `TaskEnv` class |
-| **Phase 2: Heuristics** | ✅ Complete | EDF, HIF, SJF, Slack baselines with unified evaluation framework |
-| **Phase 3: Bandit** | ✅ Complete | Linear ε-greedy contextual bandit with online gradient learning |
-| **Phase 4: DQN** | ⏳ In Progress | Neural network agent with replay buffer and target network |
-| **Phase 5: Notebook** | ⏳ Next | Comprehensive analysis and visualization |
+| **Phase 2: Heuristics**  | ✅ Complete | EDF, HIF, SJF, Slack baselines with unified evaluation framework |
+| **Phase 3: Bandit**      | ✅ Complete | Linear ε-greedy contextual bandit with online gradient learning  |
+| **Phase 4: DQN**         | ✅ Complete | Neural network agent with replay buffer and target network       |
+| **Phase 5: Notebook**    | ⏳ Next     | Comprehensive analysis and visualization                         |
 
 **Quick Test:**
+
 ```bash
 python tests/test_environment.py   # Phase 1 tests
 python demo_phase1.py              # Phase 1 demo
 python demo_phase2.py              # Phase 2 heuristic comparison
+python demo_phase3.py              # Phase 3 bandit training
+python demo_phase4.py              # Phase 4 DQN evaluation
 ```
 
 ---
@@ -32,6 +35,7 @@ This project builds a task prioritization agent that selects which task to execu
 ## 2. Problem Formulation
 
 ### State
+
 A fixed-size feature vector representing the current task list (padded to `MAX_TASKS = 5`):
 
 ```python
@@ -47,9 +51,11 @@ state = np.array([
 ```
 
 ### Action
+
 An integer index `a ∈ {0, 1, ..., MAX_TASKS-1}` representing which task to execute next.
 
 ### Reward
+
 ```python
 def compute_reward(task, current_time):
     finish_time = current_time + task["duration"]
@@ -62,6 +68,7 @@ def compute_reward(task, current_time):
 ```
 
 ### Environment
+
 - At each step: agent observes state, picks a task, executes it (advances `current_time += duration`), receives reward, task is removed from the list.
 - Episode ends when all tasks are completed.
 - A new episode generates a fresh random task set.
@@ -79,6 +86,7 @@ def compute_reward(task, current_time):
 **Status:** ✓ All components implemented and tested.
 
 **Deliverables:**
+
 - ✓ [src/environment.py](src/environment.py) – Task generator, state encoder, reward computation, TaskEnv class
 - ✓ [tests/test_environment.py](tests/test_environment.py) – 8 unit tests (all passing)
 - ✓ [demo_phase1.py](demo_phase1.py) – Demonstration of environment usage
@@ -166,24 +174,27 @@ class TaskEnv:
 **Status:** ✓ All 4 heuristics implemented, evaluated, and comparable.
 
 **Deliverables:**
+
 - ✓ [src/heuristics.py](src/heuristics.py) – EDF, HIF, SJF, Slack heuristics
 - ✓ [src/evaluate.py](src/evaluate.py) – Unified evaluation framework for all methods
 - ✓ [demo_phase2.py](demo_phase2.py) – Heuristic demonstration and comparison
 - ✓ Benchmark results on 200 episodes:
   - **EDF**: Mean Reward = -0.923 ± 3.188 (43.3% violations)
-  - **HIF**: Mean Reward = -1.616 ± 2.515 (51.6% violations)  
+  - **HIF**: Mean Reward = -1.616 ± 2.515 (51.6% violations)
   - **SJF**: Mean Reward = -1.432 ± 2.880 (38.0% violations)
   - **Slack**: Mean Reward = -0.720 ± 3.241 (40.0% violations)
 
 **Key Implementation Details:**
 
 **Heuristic Descriptions:**
+
 - **EDF (Earliest Deadline First)**: Prioritizes tasks by deadline urgency
 - **HIF (Highest Importance First)**: Prioritizes high-value tasks
 - **SJF (Shortest Job First)**: Completes quick tasks first to reduce queue length
 - **Slack**: Prioritizes tasks with minimal slack (most likely to be infeasible)
 
 **Evaluation Framework:**
+
 - `run_heuristic()` – Single heuristic evaluation over episodes
 - `evaluate_heuristic()` – Comprehensive metrics (reward, violations, lateness)
 - `evaluate_agent()` – Unified evaluation for trained agents (bandit/DQN)
@@ -199,6 +210,7 @@ class TaskEnv:
 **Status:** ✓ Linear bandit implemented, trained for 2000 episodes, and evaluated.
 
 **Deliverables:**
+
 - ✓ [src/bandit.py](src/bandit.py) – `EpsilonGreedyBandit` class with predict/select/update
 - ✓ [src/train_bandit.py](src/train_bandit.py) – Training loop (2000 episodes)
 - ✓ [demo_phase3.py](demo_phase3.py) – Train, evaluate, and compare to heuristics
@@ -207,21 +219,23 @@ class TaskEnv:
 
 **Phase 3 Results (300 test episodes):**
 
-| Method | Mean Reward | Std Dev | Violation Rate | Mean Lateness |
-|--------|-------------|---------|----------------|---------------|
-| **EDF** | -0.688 | 3.075 | 42.3% | 4.056 |
-| **HIF** | -1.360 | 2.516 | 50.3% | 9.029 |
-| **SJF** | -1.281 | 2.861 | 36.9% | 5.621 |  
-| **Slack** | -1.478 | 3.406 | 49.2% | 5.157 |
-| **Bandit** | -3.768 | 3.791 | 50.1% | 9.355 |
+| Method     | Mean Reward | Std Dev | Violation Rate | Mean Lateness |
+| ---------- | ----------- | ------- | -------------- | ------------- |
+| **EDF**    | -0.688      | 3.075   | 42.3%          | 4.056         |
+| **HIF**    | -1.360      | 2.516   | 50.3%          | 9.029         |
+| **SJF**    | -1.281      | 2.861   | 36.9%          | 5.621         |
+| **Slack**  | -1.478      | 3.406   | 49.2%          | 5.157         |
+| **Bandit** | -3.768      | 3.791   | 50.1%          | 9.355         |
 
-**🔍 Analysis:** 
+**🔍 Analysis:**
+
 - Bandit currently underperforms heuristics. This is expected in early RL training.
 - Linear model may be insufficient for complex task interactions
 - Next phase (DQN) will use neural networks for non-linear function approximation
 - EDF still best overall; DQN should surpass all by learning non-linear patterns
 
 **Key Implementation Details:**
+
 - **Architecture:** One weight vector per action: `Q(s,a) = w_a · φ(s)`
 - **Features:** State vector (20-dim) + bias term (21-dim total)
 - **Update Rule:** Online MSE gradient: `w_a := w_a + lr(r - Q(s,a))φ(s)`
@@ -235,6 +249,7 @@ class TaskEnv:
 **Goal:** Train an agent that learns from interaction using a linear model per action.
 
 #### Design decisions:
+
 - **One linear model per action** (task slot): `Q(s, a) = w_a · φ(s)`
 - **Input features** `φ(s)`: the state vector (20-dim), plus bias
 - **Update rule**: online gradient step (MSE loss)
@@ -249,12 +264,12 @@ class TaskEnv:
 
 #### Metrics to compute:
 
-| Metric | Description |
-|--------|-------------|
-| `mean_reward` | Average episode reward across test episodes |
-| `std_reward` | Stability of the policy |
-| `deadline_violations` | % of tasks completed after deadline |
-| `mean_lateness` | Average delay past deadline (0 if on time) |
+| Metric                | Description                                 |
+| --------------------- | ------------------------------------------- |
+| `mean_reward`         | Average episode reward across test episodes |
+| `std_reward`          | Stability of the policy                     |
+| `deadline_violations` | % of tasks completed after deadline         |
+| `mean_lateness`       | Average delay past deadline (0 if on time)  |
 
 #### Evaluation code:
 
@@ -338,7 +353,7 @@ def plot_learning_curve(episode_rewards, label="Bandit", window=50):
 
 ---
 
-### Phase 5 — DQN Extension (Small Scale)
+## ✅ Phase 4 — DQN Agent [COMPLETE]
 
 **Goal:** Replace the linear bandit with a neural network that can capture non-linear patterns. Keep it small and debuggable.
 
@@ -486,8 +501,8 @@ task-prioritization-rl/
 │   ├── bandit.pkl
 │   └── dqn.pth
 ├── results/
-│   ├── comparison.png
-│   └── learning_curve.png
+│   ├── phase4_comparison.png
+│   └── dqn_learning_curve.png
 ├── notebooks/
 │   └── exploration.ipynb    # Quick experiments, plots
 ├── tests/
@@ -510,6 +525,7 @@ pytest              # Sanity checks
 ```
 
 **Install:**
+
 ```bash
 pip install numpy torch matplotlib jupyter pytest
 ```
@@ -520,22 +536,22 @@ No gym, no RLlib, no stable-baselines. Everything is custom and transparent.
 
 ## 6. Timeline — 2-Week Plan
 
-| Day | Task | Status |
-|-----|------|--------|
-| **1** | Set up repo, folder structure, `requirements.txt` | ✅ Complete |
-| **2** | Implement `generate_tasks`, `encode_state`, `compute_reward` | ✅ Complete |
-| **3** | Implement `TaskEnv` (reset/step), write basic tests | ✅ Complete |
-| **4** | Implement all 4 heuristics + `run_heuristic()` | ✅ Complete |
-| **5** | Implement `EpsilonGreedyBandit` (predict, select, update) | ✅ Complete |
-| **6** | Write bandit training loop, run 2000 episodes | ✅ Complete |
-| **7** | Build `evaluate_agent()`, unify agent interfaces | ✅ Complete |
-| **8** | Plot comparison bar chart + learning curve | ✅ Complete |
-| **9** | Implement `QNetwork` + `ReplayBuffer` | ⏳ Next |
-| **10** | Write DQN training loop with action masking | ⏳ Next |
-| **11** | Run DQN 3000 episodes, debug reward signal | ⏳ Next |
-| **12** | Add DQN to evaluation comparison | ⏳ Next |
-| **13** | Write notebook with all results + narrative | ⏳ Next |
-| **14** | Clean code, finalize README, push to GitHub | ⏳ Next |
+| Day    | Task                                                         | Status      |
+| ------ | ------------------------------------------------------------ | ----------- |
+| **1**  | Set up repo, folder structure, `requirements.txt`            | ✅ Complete |
+| **2**  | Implement `generate_tasks`, `encode_state`, `compute_reward` | ✅ Complete |
+| **3**  | Implement `TaskEnv` (reset/step), write basic tests          | ✅ Complete |
+| **4**  | Implement all 4 heuristics + `run_heuristic()`               | ✅ Complete |
+| **5**  | Implement `EpsilonGreedyBandit` (predict, select, update)    | ✅ Complete |
+| **6**  | Write bandit training loop, run 2000 episodes                | ✅ Complete |
+| **7**  | Build `evaluate_agent()`, unify agent interfaces             | ✅ Complete |
+| **8**  | Plot comparison bar chart + learning curve                   | ✅ Complete |
+| **9**  | Implement `QNetwork` + `ReplayBuffer`                        | ✅ Complete |
+| **10** | Write DQN training loop with action masking                  | ✅ Complete |
+| **11** | Run DQN 3000 episodes, debug reward signal                   | ✅ Complete |
+| **12** | Add DQN to evaluation comparison                             | ✅ Complete |
+| **13** | Write notebook with all results + narrative                  | ⏳ Next     |
+| **14** | Clean code, finalize README, push to GitHub                  | ⏳ Next     |
 
 ---
 
@@ -560,7 +576,7 @@ A successful project means **all** of the following are true:
 - [x] All 4 heuristics produce printed mean ± std reward over 300 test episodes
 - [x] Bandit trains for 2000 episodes with a visible upward learning curve
 - [ ] Bandit outperforms at least one heuristic on mean reward in fair evaluation
-- [ ] DQN trains for 3000 episodes and shows improvement over random selection
+- [x] DQN trains for 3000 episodes and shows improvement over random selection
 - [x] A single `evaluate_agent()` function works for heuristics, bandit, and DQN (framework ready)
 - [x] Bar chart comparing all methods exists in `results/phase3_comparison.png`
 - [x] Code is modular: swapping `n_tasks` from 3 to 5 requires changing one constant
@@ -586,8 +602,8 @@ python demo_phase2.py
 # Phase 3: Train and evaluate contextual bandit
 python demo_phase3.py
 
-# Phase 4 (coming): Train DQN
-# python demo_phase4.py
+# Phase 4: Train and evaluate DQN
+python demo_phase4.py
 
 # Open notebook
 jupyter notebook notebooks/exploration.ipynb
@@ -595,4 +611,4 @@ jupyter notebook notebooks/exploration.ipynb
 
 ---
 
-*Built as a final project. Entirely simulation-based, no external datasets required.*
+_Built as a final project. Entirely simulation-based, no external datasets required._
